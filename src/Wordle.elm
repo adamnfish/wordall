@@ -1,7 +1,6 @@
 module Wordle exposing (..)
 
 import List.Extra
-import Maybe.Extra
 
 
 type Entry
@@ -48,8 +47,8 @@ entryAsList entry =
             [ ec1, ec2, ec3, ec4, ec5 ]
 
 
-suggestWord : List String -> List Entry -> List String
-suggestWord wordlist entries =
+suggestWords : List String -> List Entry -> List String
+suggestWords wordlist entries =
     List.filter
         (\word ->
             let
@@ -81,15 +80,12 @@ suggestWord wordlist entries =
 
                                 yellowEntryChars : List EntryChar
                                 yellowEntryChars =
-                                    List.Extra.zip
-                                        (String.toList word)
+                                    List.filter
+                                        (\{ accuracy } ->
+                                            accuracy == Yellow
+                                        )
                                         (entryAsList entry)
-                                        |> List.filter
-                                            (\( _, { accuracy } ) ->
-                                                accuracy == Yellow
-                                            )
-                                        |> List.map
-                                            (\( _, ec ) -> ec)
+                                        |> List.Extra.unique
 
                                 containsAllYellowChars : Bool
                                 containsAllYellowChars =
@@ -111,10 +107,19 @@ suggestWord wordlist entries =
                                         )
                                         (entryAsList entry)
                                         |> List.map .char
+                                        |> List.filter
+                                            (\char ->
+                                                -- ignore grey chars if there's a green version of that char in this entry
+                                                not
+                                                    (entryAsList entry
+                                                        |> List.any (\ec -> ec.accuracy == Green && ec.char == char)
+                                                    )
+                                            )
 
                                 doesNotContainGreys : Bool
                                 doesNotContainGreys =
                                     -- any grey chars should not appear in the word at all
+                                    -- *UNLESS* they also appear as green already!
                                     not <|
                                         List.any
                                             (\c ->
