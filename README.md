@@ -1,0 +1,4 @@
+Wordall
+=======
+
+Wordle assistant
