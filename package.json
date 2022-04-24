@@ -1,0 +1,20 @@
+{
+  "name": "wordall",
+  "version": "0.0.1",
+  "description": "Wordle assistant",
+  "author": "adamnfish",
+  "license": "MIT",
+  "source": "src/index.html",
+  "scripts": {
+    "start": "yarn parcel",
+    "test": "elm-test"
+  },
+  "devDependencies": {
+    "@parcel/transformer-elm": "^2.5.0",
+    "elm": "^0.19.1-5",
+    "elm-format": "^0.8.5",
+    "elm-json": "^0.2.12",
+    "elm-test": "^0.19.1-revision7",
+    "parcel": "^2.5.0"
+  }
+}
