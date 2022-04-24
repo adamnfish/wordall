@@ -9,6 +9,7 @@
     "start": "yarn parcel",
     "dev": "yarn parcel",
     "run": "yarn parcel",
+    "build": "yarn parcel build",
     "test": "elm-test"
   },
   "devDependencies": {
