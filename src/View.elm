@@ -1,4 +1,4 @@
-module View exposing (..)
+module View exposing (view)
 
 import Browser
 import Element exposing (..)
@@ -7,7 +7,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import List.Extra
-import Model exposing (Lifecycle(..), Model, Msg(..))
+import Model exposing (Lifecycle(..), LoadingStatus(..), Model, Msg(..))
 import Wordle exposing (Accuracy(..), Entry(..), EntryChar)
 
 
@@ -32,8 +32,8 @@ ui model =
         [ row
             [ width fill
             , padding 25
-            , Background.color <| rgb255 40 50 60
-            , Font.color <| rgba255 230 240 250 0.8
+            , Background.color theme.dark
+            , Font.color <| textColour theme.light
             , Font.size 30
             ]
             [ text "Wordall"
@@ -42,8 +42,8 @@ ui model =
             Welcome firstWord ->
                 welcomeUi model firstWord
 
-            Solving entries maybeSuggestions nextWord ->
-                solvingUi model entries maybeSuggestions nextWord
+            Solving entries suggestionsData nextWord ->
+                solvingUi model entries suggestionsData nextWord
         ]
 
 
@@ -58,7 +58,9 @@ welcomeUi model firstWord =
         , column
             [ padding 15
             , spacing 15
-            , Background.color <| rgb255 210 210 80
+            , Background.color theme.medium
+            , Font.color <| textColour theme.white
+            , Border.rounded 4
             ]
             [ paragraph
                 []
@@ -73,8 +75,8 @@ welcomeUi model firstWord =
         ]
 
 
-solvingUi : Model -> List Entry -> Maybe (List String) -> String -> Element Msg
-solvingUi model entries maybeSuggestions nextWord =
+solvingUi : Model -> List Entry -> LoadingStatus (List String) -> String -> Element Msg
+solvingUi model entries suggestionsData nextWord =
     let
         updateAccuracyFn : Int -> Int -> Accuracy -> Msg
         updateAccuracyFn entryIndex entryCharIndex newAccuracy =
@@ -105,39 +107,71 @@ solvingUi model entries maybeSuggestions nextWord =
             UpdateAccuracy newEntries
     in
     column
-        [ width <| px 400
+        [ width <| px 401
         , centerX
         , spacing 25
         ]
         [ column
-            [ spacing 5 ]
+            [ spacing 9 ]
           <|
             List.indexedMap (\i -> entryComponent (updateAccuracyFn i)) entries
         , nextEntryComponent nextWord
-        , case maybeSuggestions of
-            Nothing ->
+        , case suggestionsData of
+            Empty ->
                 Input.button
                     [ padding 15
-                    , Background.color <| rgb255 40 50 60
-                    , Font.color <| rgba255 230 240 250 0.8
+                    , Background.color theme.secondary
+                    , Font.color <| textColour theme.white
                     , alignTop
                     ]
                     { onPress = Just RequestSuggestions
                     , label = text "Calculate suggestions"
                     }
 
-            Just suggestions ->
-                column
-                    []
+            Loading ->
+                el
+                    [ width fill
+                    , paddingXY 8 16
+                    , Border.rounded 4
+                    , Background.color theme.dark
+                    , Font.color <| textColour theme.light
+                    ]
                 <|
-                    List.map text suggestions
+                    text "Calculating possible answers..."
+
+            Data suggestions ->
+                el
+                    [ width fill
+                    , padding 8
+                    , Background.color theme.medium
+                    , Border.rounded 4
+                    ]
+                <|
+                    wrappedRow
+                        [ width fill
+                        , spacing 8
+                        ]
+                    <|
+                        List.map suggestionNugget suggestions
         ]
+
+
+suggestionNugget : String -> Element Msg
+suggestionNugget suggestion =
+    el
+        [ padding 8
+        , Background.color theme.dark
+        , Font.color theme.light
+        , Border.rounded 4
+        ]
+    <|
+        text suggestion
 
 
 entryComponent : (Int -> Accuracy -> Msg) -> Entry -> Element Msg
 entryComponent msgFn (Filled ec1 ec2 ec3 ec4 ec5) =
     row
-        [ spacing 8 ]
+        [ spacing 9 ]
         [ entryCharComponent (msgFn 0) ec1
         , entryCharComponent (msgFn 1) ec2
         , entryCharComponent (msgFn 2) ec3
@@ -161,69 +195,154 @@ entryCharComponent msgFn entryChar =
                     Green
     in
     Input.button
-        [ width <| px 45
-        , height <| px 45
-        , Background.color <|
-            case entryChar.accuracy of
-                Green ->
-                    rgb255 100 255 100
-
-                Yellow ->
-                    rgb255 255 255 100
-
-                Grey ->
-                    rgb255 40 50 60
-        , Border.width 2
+        [ width <| px 73
+        , height <| px 73
+        , padding 1
+        , Font.size 30
+        , Font.extraBold
+        , Background.color theme.light
+        , Border.width 3
         , Border.color <|
             case entryChar.accuracy of
                 Green ->
-                    rgb255 50 50 50
+                    theme.secondary
 
                 Yellow ->
-                    rgb255 50 50 50
+                    theme.secondary
 
                 Grey ->
-                    rgb255 230 230 230
+                    theme.secondary
         , Font.color <|
             case entryChar.accuracy of
                 Green ->
-                    rgba255 50 50 50 0.8
+                    theme.white
 
                 Yellow ->
-                    rgba255 50 50 50 0.8
+                    theme.white
 
                 Grey ->
-                    rgba255 250 250 250 0.8
+                    theme.white
         ]
         { onPress = Just <| msgFn nextAccuracy
         , label =
-            el [ centerX, centerY ] <|
-                text (String.fromChar entryChar.char)
+            el
+                [ width fill
+                , height fill
+                , Background.color <|
+                    case entryChar.accuracy of
+                        Green ->
+                            theme.wordleGreen
+
+                        Yellow ->
+                            theme.wordleYellow
+
+                        Grey ->
+                            theme.wordleGrey
+                ]
+            <|
+                el [ centerX, centerY ] <|
+                    text (String.fromChar entryChar.char)
         }
 
 
 nextEntryComponent : String -> Element Msg
 nextEntryComponent currentEntry =
     row
-        [ spacing 15 ]
-        [ Input.text
-            []
-            { onChange = Type
-            , text = currentEntry
-            , placeholder = Nothing
-            , label =
-                Input.labelBelow
-                    []
-                <|
-                    text "Input word"
-            }
+        [ spacing 8
+        , padding 8
+        , Background.color theme.medium
+        , Border.rounded 4
+        ]
+        [ el
+            [ width fill ]
+          <|
+            Input.text
+                [ width fill
+                , Border.width 2
+                , Border.color theme.secondary
+                ]
+                { onChange = Type
+                , text = currentEntry
+                , placeholder = Nothing
+                , label =
+                    Input.labelBelow
+                        [ padding 2
+                        , Background.color theme.medium
+                        , Font.color <| textColour theme.secondaryDark
+                        ]
+                    <|
+                        text "Enter your guess"
+                }
         , Input.button
-            [ padding 15
-            , Background.color <| rgb255 40 50 60
-            , Font.color <| rgba255 230 240 250 0.8
+            [ padding 14
+            , Background.color theme.secondary
+            , Font.color <| textColour theme.white
             , alignTop
             ]
             { onPress = Just Submit
             , label = text "Add guess"
             }
         ]
+
+
+
+-- Theme
+
+
+theme =
+    { light = rgb255 253 240 213
+    , white = rgb255 250 250 250
+    , dark = rgb255 0 48 73
+    , medium = rgb255 102 155 188
+    , secondary = rgb255 193 18 31
+    , secondaryDark = rgb255 120 0 0
+    , wordleYellow = rgb255 255 176 17
+    , wordleGreen = rgb255 124 181 24
+    , wordleGrey = rgb255 81 80 82
+    }
+
+
+
+-- Theme utilities
+
+
+textColour : Element.Color -> Element.Color
+textColour colour =
+    let
+        rgba =
+            Element.toRgb colour
+    in
+    Element.fromRgb { rgba | alpha = 0.9 }
+
+
+clamp : Float -> Float
+clamp f =
+    Basics.max 0 <| Basics.min 1 f
+
+
+darken : Float -> Element.Color -> Element.Color
+darken darkenFactor colour =
+    let
+        rgba =
+            Element.toRgb colour
+    in
+    Element.fromRgb
+        { red = clamp <| rgba.red * (1 - darkenFactor)
+        , green = clamp <| rgba.green * (1 - darkenFactor)
+        , blue = clamp <| rgba.blue * (1 - darkenFactor)
+        , alpha = rgba.alpha
+        }
+
+
+lighten : Float -> Element.Color -> Element.Color
+lighten lightenFactor colour =
+    let
+        rgba =
+            Element.toRgb colour
+    in
+    Element.fromRgb
+        { red = clamp <| ((1 - rgba.red) * lightenFactor) + rgba.red
+        , green = clamp <| ((1 - rgba.green) * lightenFactor) + rgba.green
+        , blue = clamp <| ((1 - rgba.blue) * lightenFactor) + rgba.blue
+        , alpha = rgba.alpha
+        }

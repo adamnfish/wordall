@@ -1,5 +1,7 @@
 module Model exposing (..)
 
+import Process
+import Task
 import Wordle exposing (Entry, suggestWords, toEntry)
 import Words
 
@@ -16,14 +18,21 @@ type Msg
     | Submit
     | UpdateAccuracy (List Entry)
     | RequestSuggestions
+    | CalculateSuggestions
 
 
 type Lifecycle
     = Welcome String
-    | Solving (List Entry) (Maybe (List String)) String
+    | Solving (List Entry) (LoadingStatus (List String)) String
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
+type LoadingStatus a
+    = Empty
+    | Loading
+    | Data a
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NoOp ->
@@ -46,7 +55,7 @@ update msg model =
                 Welcome firstWord ->
                     case toEntry firstWord of
                         Just firstEntry ->
-                            ( { model | lifecycle = Solving [ firstEntry ] Nothing "" }
+                            ( { model | lifecycle = Solving [ firstEntry ] Empty "" }
                             , Cmd.none
                             )
 
@@ -56,7 +65,7 @@ update msg model =
                 Solving entries _ nextWord ->
                     case toEntry nextWord of
                         Just firstEntry ->
-                            ( { model | lifecycle = Solving (List.append entries [ firstEntry ]) Nothing "" }
+                            ( { model | lifecycle = Solving (List.append entries [ firstEntry ]) Empty "" }
                             , Cmd.none
                             )
 
@@ -65,8 +74,8 @@ update msg model =
 
         UpdateAccuracy newEntries ->
             case model.lifecycle of
-                Solving _ maybeSuggestions nextWord ->
-                    ( { model | lifecycle = Solving newEntries Nothing nextWord }
+                Solving _ _ nextWord ->
+                    ( { model | lifecycle = Solving newEntries Empty nextWord }
                     , Cmd.none
                     )
 
@@ -76,11 +85,21 @@ update msg model =
         RequestSuggestions ->
             case model.lifecycle of
                 Solving entries _ nextWord ->
+                    ( { model | lifecycle = Solving entries Loading nextWord }
+                    , Task.perform (always CalculateSuggestions) (Process.sleep 100)
+                    )
+
+                Welcome _ ->
+                    ( model, Cmd.none )
+
+        CalculateSuggestions ->
+            case model.lifecycle of
+                Solving entries _ nextWord ->
                     let
                         suggestions =
                             List.sort <| suggestWords Words.words entries
                     in
-                    ( { model | lifecycle = Solving entries (Just suggestions) nextWord }
+                    ( { model | lifecycle = Solving entries (Data suggestions) nextWord }
                     , Cmd.none
                     )
 
