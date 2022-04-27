@@ -96,7 +96,7 @@ update msg model =
                         )
 
                     else if isAlreadySolved entries then
-                        ( { model | lifecycle = Solving entries (Error "Wordle is already solved!") nextWord }
+                        ( { model | lifecycle = Solving entries (Error "This Wordle is already solved!") nextWord }
                         , Cmd.none
                         )
 

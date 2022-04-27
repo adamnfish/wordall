@@ -288,13 +288,7 @@ nextEntryComponent currentEntry =
                 , text = currentEntry
                 , placeholder = Nothing
                 , label =
-                    Input.labelBelow
-                        [ padding 2
-                        , Background.color theme.medium
-                        , Font.color <| textColour theme.secondaryDark
-                        ]
-                    <|
-                        text "Enter your guess"
+                    Input.labelHidden "Enter your guess"
                 }
         , Input.button
             [ padding 14

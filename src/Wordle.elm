@@ -25,7 +25,7 @@ toEntry string =
         entryChars =
             List.map
                 (\c ->
-                    { char = c
+                    { char = Char.toLower c
                     , accuracy = Grey
                     }
                 )
