@@ -50,7 +50,7 @@ ui model =
 welcomeUi : Model -> String -> Element Msg
 welcomeUi model firstWord =
     column
-        [ width <| px 400
+        [ width <| px 370
         , centerX
         , spacing 45
         ]
@@ -107,7 +107,7 @@ solvingUi model entries suggestionsData nextWord =
             UpdateAccuracy newEntries
     in
     column
-        [ width <| px 401
+        [ width <| px 370
         , centerX
         , spacing 25
         ]
@@ -139,20 +139,43 @@ solvingUi model entries suggestionsData nextWord =
                 <|
                     text "Calculating possible answers..."
 
-            Data suggestions ->
-                el
+            Error message ->
+                paragraph
                     [ width fill
-                    , padding 8
-                    , Background.color theme.medium
+                    , paddingXY 8 12
                     , Border.rounded 4
+                    , Background.color theme.dark
+                    , Font.color <| textColour theme.light
                     ]
-                <|
-                    wrappedRow
+                    [ text message
+                    ]
+
+            Data suggestions ->
+                if List.isEmpty suggestions then
+                    el
                         [ width fill
-                        , spacing 8
+                        , paddingXY 8 12
+                        , Border.rounded 4
+                        , Background.color theme.dark
+                        , Font.color <| textColour theme.light
                         ]
                     <|
-                        List.map suggestionNugget suggestions
+                        text "No matching words found!"
+
+                else
+                    el
+                        [ width fill
+                        , padding 8
+                        , Background.color theme.medium
+                        , Border.rounded 4
+                        ]
+                    <|
+                        wrappedRow
+                            [ width fill
+                            , spacing 8
+                            ]
+                        <|
+                            List.map suggestionNugget suggestions
         ]
 
 
@@ -195,8 +218,8 @@ entryCharComponent msgFn entryChar =
                     Green
     in
     Input.button
-        [ width <| px 73
-        , height <| px 73
+        [ width <| px 67
+        , height <| px 67
         , padding 1
         , Font.size 30
         , Font.extraBold
@@ -297,7 +320,7 @@ theme =
     , secondary = rgb255 193 18 31
     , secondaryDark = rgb255 120 0 0
     , wordleYellow = rgb255 255 176 17
-    , wordleGreen = rgb255 124 181 24
+    , wordleGreen = rgb255 44 110 73
     , wordleGrey = rgb255 81 80 82
     }
 

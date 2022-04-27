@@ -2,7 +2,7 @@ module Model exposing (..)
 
 import Process
 import Task
-import Wordle exposing (Entry, suggestWords, toEntry)
+import Wordle exposing (Entry, allEntriesGrey, isAlreadySolved, suggestWords, toEntry)
 import Words
 
 
@@ -29,6 +29,7 @@ type Lifecycle
 type LoadingStatus a
     = Empty
     | Loading
+    | Error String
     | Data a
 
 
@@ -85,9 +86,24 @@ update msg model =
         RequestSuggestions ->
             case model.lifecycle of
                 Solving entries _ nextWord ->
-                    ( { model | lifecycle = Solving entries Loading nextWord }
-                    , Task.perform (always CalculateSuggestions) (Process.sleep 100)
-                    )
+                    if allEntriesGrey entries then
+                        let
+                            errorMessage =
+                                "Have another guess first, or click on the letters above and set their colour to match what Wordle said."
+                        in
+                        ( { model | lifecycle = Solving entries (Error errorMessage) nextWord }
+                        , Cmd.none
+                        )
+
+                    else if isAlreadySolved entries then
+                        ( { model | lifecycle = Solving entries (Error "Wordle is already solved!") nextWord }
+                        , Cmd.none
+                        )
+
+                    else
+                        ( { model | lifecycle = Solving entries Loading nextWord }
+                        , Task.perform (always CalculateSuggestions) (Process.sleep 100)
+                        )
 
                 Welcome _ ->
                     ( model, Cmd.none )

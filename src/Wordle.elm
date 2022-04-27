@@ -156,3 +156,19 @@ isSubwordOf candidate check =
                 checkChars
         )
         candidateChars
+
+
+allEntriesGrey : List Entry -> Bool
+allEntriesGrey =
+    List.all
+        (\(Filled ec1 ec2 ec3 ec4 ec5) ->
+            ec1.accuracy == Grey && ec2.accuracy == Grey && ec3.accuracy == Grey && ec4.accuracy == Grey && ec5.accuracy == Grey
+        )
+
+
+isAlreadySolved : List Entry -> Bool
+isAlreadySolved =
+    List.any
+        (\(Filled ec1 ec2 ec3 ec4 ec5) ->
+            ec1.accuracy == Green && ec2.accuracy == Green && ec3.accuracy == Green && ec4.accuracy == Green && ec5.accuracy == Green
+        )
