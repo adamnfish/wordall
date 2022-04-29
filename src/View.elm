@@ -6,8 +6,9 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Html.Attributes
 import List.Extra
-import Model exposing (Lifecycle(..), LoadingStatus(..), Model, Msg(..))
+import Model exposing (Lifecycle(..), LoadingStatus(..), Model, Msg(..), inputId)
 import Wordle exposing (Accuracy(..), Entry(..), EntryChar)
 
 
@@ -178,20 +179,35 @@ solvingUi model entries suggestionsData nextWord =
                             , spacing 8
                             ]
                         <|
-                            List.map suggestionNugget suggestions
+                            List.map (suggestionNugget SubmitWord) suggestions
         ]
 
 
-suggestionNugget : String -> Element Msg
-suggestionNugget suggestion =
+suggestionNugget : (String -> Msg) -> String -> Element Msg
+suggestionNugget msgFn suggestion =
     el
-        [ padding 8
-        , Background.color theme.dark
-        , Font.color theme.light
-        , Border.rounded 4
-        ]
+        []
     <|
-        text suggestion
+        Input.button
+            [ padding 8
+            , Background.color theme.secondary
+            , Font.color <| textColour theme.white
+            , Border.rounded 4
+            ]
+            { onPress = Just <| msgFn suggestion
+            , label = text suggestion
+            }
+
+
+
+--el
+--    [ padding 8
+--    , Background.color theme.dark
+--    , Font.color theme.light
+--    , Border.rounded 4
+--    ]
+--<|
+--    text suggestion
 
 
 entryComponent : (Int -> Accuracy -> Msg) -> Entry -> Element Msg
@@ -286,6 +302,7 @@ nextEntryComponent currentEntry =
                 [ width fill
                 , Border.width 2
                 , Border.color theme.secondary
+                , htmlAttribute <| Html.Attributes.id inputId
                 ]
                 { onChange = Type
                 , text = currentEntry

@@ -1,5 +1,6 @@
 module Model exposing (..)
 
+import Browser.Dom as Dom
 import Process
 import Task
 import Wordle exposing (Entry, allEntriesGrey, isAlreadySolved, suggestWords, toEntry)
@@ -16,6 +17,7 @@ type Msg
     = NoOp
     | Type String
     | Submit
+    | SubmitWord String
     | UpdateAccuracy (List Entry)
     | RequestSuggestions
     | CalculateSuggestions
@@ -31,6 +33,10 @@ type LoadingStatus a
     | Loading
     | Error String
     | Data a
+
+
+inputId =
+    "word-input"
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -54,24 +60,18 @@ update msg model =
         Submit ->
             case model.lifecycle of
                 Welcome firstWord ->
-                    case toEntry firstWord of
-                        Just firstEntry ->
-                            ( { model | lifecycle = Solving [ firstEntry ] Empty "" }
-                            , Cmd.none
-                            )
-
-                        Nothing ->
-                            ( model, Cmd.none )
+                    addEntry model [] firstWord
 
                 Solving entries _ nextWord ->
-                    case toEntry nextWord of
-                        Just firstEntry ->
-                            ( { model | lifecycle = Solving (List.append entries [ firstEntry ]) Empty "" }
-                            , Cmd.none
-                            )
+                    addEntry model entries nextWord
 
-                        Nothing ->
-                            ( model, Cmd.none )
+        SubmitWord word ->
+            case model.lifecycle of
+                Welcome _ ->
+                    addEntry model [] word
+
+                Solving entries _ _ ->
+                    addEntry model entries word
 
         UpdateAccuracy newEntries ->
             case model.lifecycle of
@@ -116,8 +116,25 @@ update msg model =
                             List.sort <| suggestWords Words.words entries
                     in
                     ( { model | lifecycle = Solving entries (Data suggestions) nextWord }
-                    , Cmd.none
+                    , focusInput
                     )
 
                 Welcome _ ->
                     ( model, Cmd.none )
+
+
+addEntry : Model -> List Entry -> String -> ( Model, Cmd Msg )
+addEntry model entries word =
+    case toEntry word of
+        Just nextEntry ->
+            ( { model | lifecycle = Solving (List.append entries [ nextEntry ]) Empty "" }
+            , focusInput
+            )
+
+        Nothing ->
+            ( model, Cmd.none )
+
+
+focusInput : Cmd Msg
+focusInput =
+    Task.attempt (always NoOp) (Dom.focus inputId)
