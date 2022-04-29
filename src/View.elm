@@ -28,6 +28,9 @@ ui model =
     Element.column
         [ width fill
         , spacing 25
+        , Font.family
+            [ Font.typeface "Nunito" ]
+        , Font.regular
         ]
         [ row
             [ width fill
@@ -264,7 +267,7 @@ entryCharComponent msgFn entryChar =
                 ]
             <|
                 el [ centerX, centerY ] <|
-                    text (String.fromChar entryChar.char)
+                    text (String.toUpper <| String.fromChar entryChar.char)
         }
 
 
