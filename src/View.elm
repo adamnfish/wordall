@@ -155,6 +155,10 @@ solvingUi model entries suggestionsData nextWord =
                     ]
 
             Data suggestions ->
+                let
+                    ( noDuplicateSuggestions, duplicateSuggestions ) =
+                        List.partition (String.toList >> List.Extra.allDifferent) suggestions
+                in
                 if List.isEmpty suggestions then
                     el
                         [ width fill
@@ -167,19 +171,60 @@ solvingUi model entries suggestionsData nextWord =
                         text "No matching words found!"
 
                 else
-                    el
+                    column
                         [ width fill
-                        , padding 8
                         , Background.color theme.medium
                         , Border.rounded 4
                         ]
-                    <|
-                        wrappedRow
+                        [ column
                             [ width fill
-                            , spacing 8
+                            , padding 8
+                            , spacing 6
                             ]
-                        <|
-                            List.map (suggestionNugget SubmitWord) suggestions
+                            [ el
+                                [ paddingXY 0 0
+                                , Font.size 14
+                                , Font.color theme.dark
+                                ]
+                              <|
+                                text "NO DUPLICATE LETTERS"
+                            , wrappedRow
+                                [ width fill
+                                , spacing 8
+                                ]
+                              <|
+                                List.map (suggestionNugget SubmitWord) noDuplicateSuggestions
+                            ]
+                        , el
+                            [ width fill
+                            , height <| px 1
+                            , Background.color theme.dark
+                            ]
+                            Element.none
+                        , column
+                            [ width fill
+                            , padding 8
+                            , spacing 6
+                            ]
+                            [ el
+                                [ paddingXY 0 0
+                                , Font.size 14
+                                , Font.color theme.dark
+                                ]
+                              <|
+                                text "DUPLICATE LETTERS"
+                            , wrappedRow
+                                [ width fill
+                                , spacing 8
+                                ]
+                              <|
+                                List.map (suggestionNugget SubmitWord) duplicateSuggestions
+                            ]
+                        ]
+        , el
+            [ height <| px 1 ]
+          <|
+            Element.none
         ]
 
 
