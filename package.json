@@ -6,16 +6,17 @@
   "license": "MIT",
   "source": "src/index.html",
   "scripts": {
-    "start": " parcel",
+    "start": "parcel",
     "build": "parcel build --public-url ./",
     "test": "elm-test"
   },
   "devDependencies": {
     "@parcel/transformer-elm": "^2.5.0",
-    "elm": "^0.19.1-6",
-    "elm-format": "^0.8.8",
-    "elm-json": "^0.2.13",
-    "elm-test": "^0.19.1-revision17",
+    "elm": "latest",
+    "elm-json": "latest",
+    "elm-format": "latest",
+    "elm-review": "latest",
+    "elm-test": "latest",
     "parcel": "^2.16.3"
   }
 }
