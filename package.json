@@ -13,7 +13,6 @@
   "devDependencies": {
     "@parcel/transformer-elm": "^2.5.0",
     "elm": "latest",
-    "elm-json": "latest",
     "elm-format": "latest",
     "elm-review": "latest",
     "elm-test": "latest",
